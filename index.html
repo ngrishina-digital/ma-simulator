@@ -4,589 +4,712 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Симулятор «Несварение M&amp;A» v2.2 | Наталия Гришина — Fractional COO &amp; CAIO</title>
-  <meta name="description" content="Интерактивный стресс-тест P&amp;L и ИТ-интеграции после сделок M&amp;A (горизонт 36 месяцев, ставка капитала 25%). Разброс между сценариями сделки — 5 047 млн ₽.">
-  <meta name="author" content="Nataliia Grishina">
-  <meta name="robots" content="index, follow">
+  <meta name="description" content="Интерактивный стресс-тест P&amp;L и ИТ-интеграции после сделок M&amp;A (горизонт 36 месяцев). Расчёт синергии, затрат на PMI, долговой нагрузки и индексации B2B-лицензий.">
   <link rel="canonical" href="https://ngrishina-digital.github.io/ma-simulator/">
 
-  <!-- OpenGraph / Telegram / LinkedIn Preview -->
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://ngrishina-digital.github.io/ma-simulator/">
-  <meta property="og:title" content="Симулятор «Несварение M&amp;A» v2.2 — Стресс-тест P&amp;L и PMI">
-  <meta property="og:description" content="5 047 млн ₽ разброса между сценариями сделки за 30 секунд расчёта. Проверьте цену промедления ИТ-интеграции и вендорского оброка.">
-  <meta property="og:image" content="https://ngrishina-digital.github.io/portrait.webp">
-  <meta property="og:site_name" content="Nataliia Grishina Product Lab">
-
-  <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap&subset=latin,cyrillic" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       darkMode: 'class',
       theme: {
         extend: {
           fontFamily: {
-            sans: ['Inter', 'system-ui', 'sans-serif'],
-            mono: ['JetBrains Mono', 'monospace'],
-          },
-          colors: {
-            editorial: {
-              bg: '#090B10',
-              surface: '#11151F',
-              card: '#151A26',
-              border: '#22293A',
-              accent: '#FF2A00',
-            }
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'monospace'],
           }
         }
       }
     }
   </script>
   <style>
-    body {
+    html, body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background-color: #090B10;
       color: #F8FAFC;
+      -webkit-font-smoothing: antialiased;
+      font-synthesis: none;
+    }
+    body {
       background-image:
         radial-gradient(at 15% 5%, rgba(255, 42, 0, 0.06) 0px, transparent 45%),
-        radial-gradient(at 85% 30%, rgba(16, 185, 129, 0.04) 0px, transparent 50%);
+        radial-gradient(at 85% 30%, rgba(16, 185, 129, 0.05) 0px, transparent 50%);
       background-attachment: fixed;
     }
-    html[lang="ru"] [data-lang="en"] { display: none !important; }
-    html[lang="en"] [data-lang="ru"] { display: none !important; }
+    .num-tab {
+      font-variant-numeric: tabular-nums;
+      font-feature-settings: "tnum" 1, "zero" 1;
+    }
     .editorial-card {
-      background: linear-gradient(180deg, rgba(21, 26, 38, 0.88) 0%, rgba(15, 19, 28, 0.96) 100%);
+      background: linear-gradient(180deg, rgba(21, 26, 38, 0.9) 0%, rgba(14, 18, 27, 0.97) 100%);
       border: 1px solid rgba(34, 41, 58, 0.95);
-      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .scenario-btn.active-scenario {
-      background: linear-gradient(180deg, rgba(30, 38, 56, 0.95) 0%, rgba(17, 21, 31, 0.98) 100%);
+    .preset-btn {
+      transition: all 0.2s ease;
+    }
+    .preset-btn.active {
+      background: linear-gradient(180deg, rgba(32, 39, 58, 0.95) 0%, rgba(17, 21, 31, 0.98) 100%);
       border-color: #FF2A00;
-      box-shadow: 0 12px 30px -10px rgba(255, 42, 0, 0.25);
-    }
-    .btn-lift {
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    .btn-lift:hover {
-      transform: translateY(-2px);
+      box-shadow: 0 10px 25px -8px rgba(255, 42, 0, 0.28);
     }
     input[type="range"] {
       accent-color: #FF2A00;
+      height: 6px;
+      border-radius: 999px;
+      background: #1E2638;
+      cursor: pointer;
+    }
+    input[type="range"]:disabled {
+      accent-color: #475569;
+      cursor: not-allowed;
+      opacity: 0.65;
     }
   </style>
 </head>
-<body class="antialiased selection:bg-[#FF2A00] selection:text-white min-h-screen flex flex-col">
+<body class="min-h-screen flex flex-col selection:bg-[#FF2A00] selection:text-white">
 
-  <!-- TOP STICKY HEADER -->
+  <!-- TOP HEADER -->
   <header class="sticky top-0 z-50 backdrop-blur-md bg-[#090B10]/90 border-b border-[#22293A]">
-    <div class="max-w-[1200px] mx-auto px-5 sm:px-8 h-16 flex items-center justify-between">
+    <div class="max-w-[1280px] mx-auto px-4 sm:px-8 h-16 flex items-center justify-between">
       <div class="flex items-center gap-4">
-        <a href="https://ngrishina-digital.github.io/" class="text-xs sm:text-sm font-mono uppercase tracking-wider text-slate-300 hover:text-white transition">
-          <span data-lang="ru">← На сайт Наталии Гришиной</span>
-          <span data-lang="en">← Back to Nataliia Grishina</span>
+        <a href="https://ngrishina-digital.github.io/" class="text-xs sm:text-sm font-semibold text-slate-300 hover:text-white transition">
+          ← На сайт Наталии Гришиной
         </a>
-        <span class="hidden md:inline-block text-slate-700">|</span>
+        <span class="hidden md:inline text-slate-700">|</span>
         <span class="hidden md:inline-flex items-center gap-2 text-xs font-mono text-emerald-400">
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          M&amp;A Stress-Test Engine v2.2 (Public Demo)
+          C-Level Decision Framework · Engine v2.2
         </span>
       </div>
-
       <div class="flex items-center gap-3">
-        <button id="langToggle" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-[#151A26] hover:bg-slate-800 text-slate-200 border border-[#22293A] hover:border-slate-600 transition cursor-pointer" aria-label="Switch Language">
-          <span id="langBadgeRu" class="text-white">RU</span>
-          <span class="text-slate-600">/</span>
-          <span id="langBadgeEn" class="text-slate-500">EN</span>
-        </button>
-        <a data-lang="ru" href="https://t.me/NataliiaGrishina?text=%D0%9D%D0%B0%D1%82%D0%B0%D0%BB%D0%B8%D1%8F%2C%20%D0%B7%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5%21%20%D0%A1%D0%BC%D0%BE%D1%82%D1%80%D1%8E%20%D0%B4%D0%B5%D0%BC%D0%BE%20%D1%81%D0%B8%D0%BC%D1%83%D0%BB%D1%8F%D1%82%D0%BE%D1%80%D0%B0%20%C2%AB%D0%9D%D0%B5%D1%81%D0%B2%D0%B0%D1%80%D0%B5%D0%BD%D0%B8%D0%B5%20M%26A%C2%BB%20v2.2.%20%D0%A5%D0%BE%D1%87%D1%83%20%D0%B7%D0%B0%D0%BF%D1%80%D0%BE%D1%81%D0%B8%D1%82%D1%8C%20%D0%BF%D0%BE%D0%BB%D0%BD%D1%83%D1%8E%20LMS-%D0%BB%D0%B8%D1%86%D0%B5%D0%BD%D0%B7%D0%B8%D1%8E%20%D1%81%203%20%D0%BA%D0%B5%D0%B9%D1%81%D0%B0%D0%BC%D0%B8%20%28450%20000%20%E2%82%BD%29%20/%20%D0%BF%D1%80%D0%B0%D0%BA%D1%82%D0%B8%D0%BA%D1%83%D0%BC%20%D0%B4%D0%BB%D1%8F%20EMBA%20%28300%20000%20%E2%82%BD%29." target="_blank" rel="noopener noreferrer" class="btn-lift px-4 py-2 rounded-lg text-xs font-semibold bg-[#FF2A00] hover:bg-[#e02400] text-white shadow-lg shadow-[#FF2A00]/20">
-          Запросить полный доступ
-        </a>
-        <a data-lang="en" href="https://www.linkedin.com/in/nataliagrishina/" target="_blank" rel="noopener noreferrer" class="btn-lift px-4 py-2 rounded-lg text-xs font-semibold bg-[#FF2A00] hover:bg-[#e02400] text-white shadow-lg shadow-[#FF2A00]/20">
-          Request Full Access
+        <a href="https://t.me/NataliiaGrishina?text=%D0%9D%D0%B0%D1%82%D0%B0%D0%BB%D0%B8%D1%8F%2C%20%D0%B7%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5%21%20%D0%A1%D0%BC%D0%BE%D1%82%D1%80%D1%8E%20%D1%81%D0%B8%D0%BC%D1%83%D0%BB%D1%8F%D1%82%D0%BE%D1%80%20%C2%AB%D0%9D%D0%B5%D1%81%D0%B2%D0%B0%D1%80%D0%B5%D0%BD%D0%B8%D0%B5%20M%26A%C2%BB%20v2.2.%20%D0%A5%D0%BE%D1%87%D1%83%20%D0%BE%D0%B1%D1%81%D1%83%D0%B4%D0%B8%D1%82%D1%8C%20%D0%BF%D0%BE%D0%BB%D0%BD%D1%83%D1%8E%20LMS-%D0%BB%D0%B8%D1%86%D0%B5%D0%BD%D0%B7%D0%B8%D1%8E%20/%20%D0%B0%D1%83%D0%B4%D0%B8%D1%82%20%D1%81%D0%B4%D0%B5%D0%BB%D0%BA%D0%B8." target="_blank" rel="noopener noreferrer" class="px-4 py-2 rounded-lg text-xs font-semibold bg-[#FF2A00] hover:bg-[#e02400] text-white shadow-lg shadow-[#FF2A00]/20 transition">
+          Запросить полную PRO / LMS версию →
         </a>
       </div>
     </div>
   </header>
 
-  <!-- MAIN CONTENT -->
-  <main class="flex-grow max-w-[1200px] w-full mx-auto px-5 sm:px-8 py-10 sm:py-14 space-y-10">
+  <main class="flex-grow max-w-[1280px] w-full mx-auto px-4 sm:px-8 py-8 sm:py-10 space-y-8">
 
-    <!-- HERO BANNER -->
-    <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6 border-b border-[#22293A] pb-8">
-      <div class="space-y-3 max-w-3xl">
-        <p class="text-xs font-mono uppercase tracking-widest text-[#FF2A00] font-semibold">
-          <span data-lang="ru">04 / PRODUCT LAB · СИМУЛЯТОР «НЕСВАРЕНИЕ M&amp;A» v2.2</span>
-          <span data-lang="en">04 / PRODUCT LAB · M&amp;A INDIGESTION SIMULATOR v2.2</span>
-        </p>
-        <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
-          <span data-lang="ru">Стресс-тест P&amp;L и ИТ-интеграции после сделки</span>
-          <span data-lang="en">Post-Merger P&amp;L &amp; IT Integration Stress-Test</span>
-        </h1>
-        <p class="text-slate-400 text-sm sm:text-base">
-          <span data-lang="ru">Горизонт моделирования: <strong class="text-slate-200">36 месяцев</strong> · Стоимость капитала: <strong class="text-slate-200">25% годовых</strong> · Разброс между сценариями: <strong class="text-white">5 047 млн ₽</strong></span>
-          <span data-lang="en">Modeling Horizon: <strong class="text-slate-200">36 Months</strong> · Cost of Capital: <strong class="text-slate-200">25% APR</strong> · Net Scenario Spread: <strong class="text-white">5,047M ₽</strong></span>
-        </p>
+    <!-- HERO & CONCEPT EXPLANATION ("В ЧЁМ ФИШКА") -->
+    <section class="editorial-card rounded-3xl p-6 sm:p-8 border-[#22293A]">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+        <div class="lg:col-span-8 space-y-3">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FF2A00]/10 border border-[#FF2A00]/30 text-[#FF2A00] text-xs font-semibold tracking-wide uppercase">
+            Симулятор «Несварение M&amp;A» v2.2 · Пост-сделочный стресс-тест P&amp;L
+          </div>
+          <h1 class="text-2xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
+            Почему 70% ИТ-сделок разрушают стоимость уже после подписания (Signing)
+          </h1>
+          <p class="text-slate-300 text-sm sm:text-base leading-relaxed">
+            Инвестбанкиры считают M&amp;A по мультипликаторам на входе, но реальный P&amp;L ломается на этапе <strong class="text-white">PMI (Post-Merger Integration)</strong>: когда компания одновременно платит проценты по LBO-долгу, годами содержит дублирующие ИТ-контуры (Legacy-штраф к EBITDA) и пытается закрыть кассовый разрыв принудительным повышением цен на B2B-лицензии для клиентов.
+          </p>
+        </div>
+
+        <div class="lg:col-span-4 bg-[#090B10] border border-[#22293A] rounded-2xl p-5 space-y-3">
+          <div class="flex items-center justify-between text-xs text-slate-400">
+            <span>Разброс сценариев (36 мес):</span>
+            <span class="font-mono text-emerald-400 font-bold">v2.2 Math Core</span>
+          </div>
+          <div class="num-tab text-3xl sm:text-4xl font-extrabold text-white">
+            5&nbsp;047&nbsp;млн&nbsp;₽
+          </div>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Между сценарием «Франкенштейн» (<span class="text-rose-400 font-semibold">−4&nbsp;074.9M&nbsp;₽</span>) и «Жёсткий PMI» (<span class="text-emerald-400 font-semibold">+972.1M&nbsp;₽</span>) при ставке капитала 25%.
+          </p>
+        </div>
       </div>
+    </section>
 
-      <div class="editorial-card rounded-2xl px-6 py-4 flex flex-col justify-center shrink-0">
-        <span class="text-[11px] font-mono uppercase tracking-wider text-slate-400">
-          <span data-lang="ru">Цена 1 месяца промедления PMI</span>
-          <span data-lang="en">Cost of 1-Month PMI Delay</span>
-        </span>
-        <span class="text-2xl sm:text-3xl font-mono font-extrabold text-white mt-0.5">
-          +527.4M ₽ <span class="text-xs font-normal text-emerald-400">EBITDA</span>
-        </span>
-      </div>
-    </div>
-
-    <!-- STEP 1: 3 CLICKABLE SCENARIO PRESETS -->
+    <!-- STEP 1: 3 SCENARIO PRESETS -->
     <section class="space-y-3">
-      <div class="flex items-center justify-between">
-        <p class="text-xs font-mono uppercase tracking-wider text-slate-400">
-          <span data-lang="ru">ШАГ 1. ВЫБЕРИТЕ ПРЕДУСТАНОВЛЕННЫЙ СЦЕНАРИЙ СДЕЛКИ (ДОСТУПНО В ДЕМО):</span>
-          <span data-lang="en">STEP 1. SELECT A PRESET DEAL SCENARIO (ACTIVE IN PUBLIC DEMO):</span>
-        </p>
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">
+          Шаг 1. Выберите эталонный сценарий сделки или протестируйте чувствительность живыми ползунками:
+        </h2>
+        <span class="text-xs text-slate-400">
+          🔓 <strong class="text-white">2 базовых ползунка открыты</strong> для теста · 🔒 <strong class="text-amber-400">6 параметров холдинга — в PRO/LMS</strong>
+        </span>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <!-- Preset 1: Baseline -->
-        <button type="button" data-scenario="baseline" class="scenario-btn active-scenario editorial-card text-left p-5 rounded-2xl cursor-pointer flex flex-col justify-between space-y-4">
-          <div class="space-y-1.5 w-full">
-            <div class="flex items-center justify-between gap-2">
-              <span class="text-[11px] font-mono uppercase tracking-wider text-slate-400">
-                <span data-lang="ru">01 · БАЗОВЫЙ СЦЕНАРИЙ (3 МЛРД ₽)</span>
-                <span data-lang="en">01 · BASELINE SCENARIO (3B ₽)</span>
-              </span>
-              <span class="active-pill px-2 py-0.5 text-[10px] font-mono uppercase bg-[#FF2A00]/20 text-[#FF2A00] rounded border border-[#FF2A00]/40">Active</span>
-            </div>
-            <div class="text-lg font-bold text-white">
-              <span data-lang="ru">Иллюзия «мягкой интеграции»</span>
-              <span data-lang="en">The "Soft Integration" Illusion</span>
-            </div>
+        <!-- Preset 1 -->
+        <button type="button" onclick="applyPreset('baseline')" id="btn-baseline" class="preset-btn active editorial-card rounded-2xl p-5 text-left space-y-3 cursor-pointer">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">01 · Базовый сценарий</span>
+            <span class="px-2 py-0.5 text-[10px] font-mono bg-[#FF2A00]/20 text-[#FF2A00] rounded border border-[#FF2A00]/40">3 000 млн ₽</span>
           </div>
-          <div class="flex items-baseline justify-between pt-3 border-t border-[#22293A]/80 font-mono w-full">
-            <span class="text-xs text-slate-400">PMI: 0.12 · Hike: +18.2%</span>
-            <span class="text-lg font-extrabold text-rose-400">−1 092.4M ₽</span>
+          <div class="text-base sm:text-lg font-bold text-white">Иллюзия «мягкой интеграции»</div>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Долг 60%, Legacy-штраф 15%, умеренная скорость PMI (α = 0.12), целевая синергия 6%.
+          </p>
+          <div class="pt-2 border-t border-[#22293A] flex items-center justify-between text-xs font-mono">
+            <span class="text-slate-400">Net Value (36м): <strong class="text-rose-400">−1 092.4M ₽</strong></span>
+            <span class="text-amber-400">Тарифы: +18.2%</span>
           </div>
         </button>
 
-        <!-- Preset 2: Frankenstein -->
-        <button type="button" data-scenario="frankenstein" class="scenario-btn editorial-card text-left p-5 rounded-2xl cursor-pointer flex flex-col justify-between space-y-4">
-          <div class="space-y-1.5 w-full">
-            <div class="flex items-center justify-between gap-2">
-              <span class="text-[11px] font-mono uppercase tracking-wider text-slate-400">
-                <span data-lang="ru">02 · «ФРАНКЕНШТЕЙН» (5 МЛРД ₽)</span>
-                <span data-lang="en">02 · "FRANKENSTEIN" (5B ₽)</span>
-              </span>
-              <span class="active-pill hidden px-2 py-0.5 text-[10px] font-mono uppercase bg-[#FF2A00]/20 text-[#FF2A00] rounded border border-[#FF2A00]/40">Active</span>
-            </div>
-            <div class="text-lg font-bold text-white">
-              <span data-lang="ru">ИТ-зоопарк и вендорский оброк</span>
-              <span data-lang="en">Legacy Zoo &amp; Vendor Lock-In Tax</span>
-            </div>
+        <!-- Preset 2 -->
+        <button type="button" onclick="applyPreset('frankenstein')" id="btn-frankenstein" class="preset-btn editorial-card rounded-2xl p-5 text-left space-y-3 cursor-pointer">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">02 · Сценарий «Франкенштейн»</span>
+            <span class="px-2 py-0.5 text-[10px] font-mono bg-rose-500/20 text-rose-400 rounded border border-rose-500/40">5 000 млн ₽</span>
           </div>
-          <div class="flex items-baseline justify-between pt-3 border-t border-[#22293A]/80 font-mono w-full">
-            <span class="text-xs text-slate-400">PMI: 0.08 · Hike: +67.9%</span>
-            <span class="text-lg font-extrabold text-rose-500">−4 074.9M ₽</span>
+          <div class="text-base sm:text-lg font-bold text-white">ИТ-зоопарк и вендорский оброк</div>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Долг 70%, тяжелое легаси 20%, затянутый PMI (α = 0.08), слабая синергия 4%.
+          </p>
+          <div class="pt-2 border-t border-[#22293A] flex items-center justify-between text-xs font-mono">
+            <span class="text-slate-400">Net Value (36м): <strong class="text-rose-500">−4 074.9M ₽</strong></span>
+            <span class="text-rose-400">Тарифы: +67.9%</span>
           </div>
         </button>
 
-        <!-- Preset 3: Hard PMI -->
-        <button type="button" data-scenario="hardPmi" class="scenario-btn editorial-card text-left p-5 rounded-2xl cursor-pointer flex flex-col justify-between space-y-4">
-          <div class="space-y-1.5 w-full">
-            <div class="flex items-center justify-between gap-2">
-              <span class="text-[11px] font-mono uppercase tracking-wider text-slate-400">
-                <span data-lang="ru">03 · «ЖЕСТКИЙ PMI» (2 МЛРД ₽)</span>
-                <span data-lang="en">03 · "HARD PMI" (2B ₽)</span>
-              </span>
-              <span class="active-pill hidden px-2 py-0.5 text-[10px] font-mono uppercase bg-[#FF2A00]/20 text-[#FF2A00] rounded border border-[#FF2A00]/40">Active</span>
-            </div>
-            <div class="text-lg font-bold text-white">
-              <span data-lang="ru">Хирургическая санация P&amp;L</span>
-              <span data-lang="en">Surgical Turnaround &amp; P&amp;L Defense</span>
-            </div>
+        <!-- Preset 3 -->
+        <button type="button" onclick="applyPreset('hardPmi')" id="btn-hardPmi" class="preset-btn editorial-card rounded-2xl p-5 text-left space-y-3 cursor-pointer">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">03 · Сценарий «Жёсткий PMI»</span>
+            <span class="px-2 py-0.5 text-[10px] font-mono bg-emerald-500/20 text-emerald-400 rounded border border-emerald-500/40">2 000 млн ₽</span>
           </div>
-          <div class="flex items-baseline justify-between pt-3 border-t border-[#22293A]/80 font-mono w-full">
-            <span class="text-xs text-slate-400">PMI: 0.25 · Hike: 0.0%</span>
-            <span class="text-lg font-extrabold text-emerald-400">+972.1M ₽</span>
+          <div class="text-base sm:text-lg font-bold text-white">Хирургическая санация актива</div>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Дисконт за техдолг, долг 30%, легаси 8%, быстрый снос дублей (α = 0.25), синергия 8%.
+          </p>
+          <div class="pt-2 border-t border-[#22293A] flex items-center justify-between text-xs font-mono">
+            <span class="text-slate-400">Net Value (36м): <strong class="text-emerald-400">+972.1M ₽</strong></span>
+            <span class="text-emerald-400">Тарифы: 0.0%</span>
           </div>
         </button>
       </div>
     </section>
 
-    <!-- MAIN WORKSPACE: LEFT = LOCKED SLIDERS, RIGHT = LIVE TELEMETRY -->
-    <section class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+    <!-- MAIN SIMULATOR WORKSPACE -->
+    <section class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
-      <!-- LEFT COLUMN: LOCKED SLIDERS WITH CTA OVERLAY -->
-      <div class="lg:col-span-5 relative rounded-2xl editorial-card p-6 sm:p-8 overflow-hidden flex flex-col justify-between">
-        <!-- Underlying Sliders (Blurred & Disabled in Public Demo) -->
-        <div class="space-y-6 opacity-35 pointer-events-none select-none filter blur-[1.5px]" aria-hidden="true">
-          <div class="flex items-center justify-between border-b border-[#22293A] pb-3">
-            <span class="text-xs font-mono uppercase text-slate-400">
-              <span data-lang="ru">ПАРАМЕТРЫ СДЕЛКИ (РУЧНОЙ ВВОД)</span>
-              <span data-lang="en">CUSTOM DEAL PARAMETERS</span>
+      <!-- LEFT COLUMN: ALL 8 SLIDERS CLEARLY VISIBLE -->
+      <div class="lg:col-span-5 editorial-card rounded-3xl p-6 sm:p-7 space-y-6">
+        <div class="flex items-center justify-between border-b border-[#22293A] pb-4">
+          <div>
+            <h3 class="text-base font-bold text-white">Параметры M&amp;A и архитектуры</h3>
+            <p class="text-xs text-slate-400">Математическое ядро v2.2 (горизонт 36 мес.)</p>
+          </div>
+          <span id="customBadge" class="px-2.5 py-1 text-[11px] font-mono font-semibold bg-emerald-500/15 text-emerald-400 rounded-lg border border-emerald-500/30">
+            Интерактивный расчёт
+          </span>
+        </div>
+
+        <!-- ACTIVE SLIDERS (UNLOCKED FOR HANDS-ON TESTING) -->
+        <div class="space-y-5 bg-[#090B10]/90 p-4 rounded-2xl border border-[#FF2A00]/40">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-[#FF2A00]">
+              🔓 Открыто для стресс-теста в демо
             </span>
-            <span class="text-xs font-mono text-[#FF2A00]">LOCKED</span>
+            <span class="text-[11px] text-slate-400">Двигайте ползунки</span>
           </div>
 
-          <div>
-            <div class="flex justify-between text-xs font-mono mb-2">
-              <span><span data-lang="ru">Сумма сделки (CapEx)</span><span data-lang="en">Deal CapEx</span></span>
-              <span id="sliderCapexLabel" class="text-white font-bold">3 000M ₽</span>
+          <!-- Slider 1: Deal Price (ACTIVE) -->
+          <div class="space-y-1.5">
+            <div class="flex justify-between text-xs">
+              <label for="inpDealPrice" class="font-medium text-slate-200">1. Сумма сделки (Deal CapEx)</label>
+              <span id="valDealPrice" class="num-tab font-mono font-bold text-white">3 000 млн ₽</span>
             </div>
-            <input id="sliderCapex" type="range" min="1000" max="6000" value="3000" disabled class="w-full">
+            <input id="inpDealPrice" type="range" min="500" max="10000" step="100" value="3000" class="w-full" oninput="onUserSliderChange()">
+            <div class="flex justify-between text-[10px] text-slate-500 font-mono">
+              <span>500 млн ₽</span>
+              <span>Коэфф. масштаба PMI: <strong id="valScaleFactor" class="text-slate-300">1.00x</strong></span>
+              <span>10 000 млн ₽</span>
+            </div>
           </div>
 
-          <div>
-            <div class="flex justify-between text-xs font-mono mb-2">
-              <span><span data-lang="ru">Скорость PMI-интеграции (α)</span><span data-lang="en">PMI Integration Speed (α)</span></span>
-              <span id="sliderPmiLabel" class="text-white font-bold">0.12</span>
+          <!-- Slider 2: PMI Speed alpha (ACTIVE) -->
+          <div class="space-y-1.5">
+            <div class="flex justify-between text-xs">
+              <label for="inpSpeed" class="font-medium text-slate-200">2. Скорость интеграции PMI (α)</label>
+              <span id="valSpeed" class="num-tab font-mono font-bold text-emerald-400">0.12 / мес</span>
             </div>
-            <input id="sliderPmi" type="range" min="5" max="35" value="12" disabled class="w-full">
-          </div>
-
-          <div>
-            <div class="flex justify-between text-xs font-mono mb-2">
-              <span><span data-lang="ru">Индексация B2B-лицензий вендорами</span><span data-lang="en">Vendor License Hike</span></span>
-              <span id="sliderHikeLabel" class="text-white font-bold">+18.2%</span>
+            <input id="inpSpeed" type="range" min="0.05" max="0.30" step="0.01" value="0.12" class="w-full" oninput="onUserSliderChange()">
+            <div class="flex justify-between text-[10px] text-slate-500 font-mono">
+              <span>0.05 (Болото / саботаж)</span>
+              <span>0.30 (Жёсткий снос дублей)</span>
             </div>
-            <input id="sliderHike" type="range" min="0" max="100" value="18" disabled class="w-full">
-          </div>
-
-          <div>
-            <div class="flex justify-between text-xs font-mono mb-2">
-              <span><span data-lang="ru">Отток ключевых ИТ-инженеров</span><span data-lang="en">Key Engineering Churn</span></span>
-              <span id="sliderChurnLabel" class="text-white font-bold">18%</span>
-            </div>
-            <input id="sliderChurn" type="range" min="0" max="50" value="18" disabled class="w-full">
-          </div>
-
-          <div>
-            <div class="flex justify-between text-xs font-mono mb-2">
-              <span><span data-lang="ru">Содержание дублирующего ИТ-контура</span><span data-lang="en">Duplicate Stack Duration</span></span>
-              <span id="sliderDupLabel" class="text-white font-bold">18 мес.</span>
-            </div>
-            <input id="sliderDup" type="range" min="3" max="36" value="18" disabled class="w-full">
           </div>
         </div>
 
-        <!-- GLASSMORPHIC LOCK OVERLAY -->
-        <div class="absolute inset-0 bg-[#090B10]/80 backdrop-blur-[3px] p-6 sm:p-8 flex flex-col items-center justify-center text-center space-y-5 z-10">
-          <div class="w-12 h-12 rounded-2xl bg-[#FF2A00]/15 border border-[#FF2A00]/40 flex items-center justify-center text-[#FF2A00] shadow-lg shadow-[#FF2A00]/10">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
+        <!-- LOCKED PRO SLIDERS (VISIBLE & READABLE, DISABLED FOR MANUAL DRAG) -->
+        <div class="space-y-4 pt-1">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-amber-400">
+              🔒 Параметры контура холдинга (меняются пресетами)
+            </span>
+            <span class="text-[10px] font-mono text-slate-400 bg-[#151A26] px-2 py-0.5 rounded border border-[#22293A]">PRO / LMS</span>
           </div>
 
-          <div class="space-y-2 max-w-sm">
-            <p class="text-[11px] font-mono uppercase tracking-widest text-[#FF2A00] font-semibold">
-              <span data-lang="ru">РУЧНОЙ РЕЖИМ ЗАБЛОКИРОВАН В ДЕМО</span>
-              <span data-lang="en">CUSTOM SLIDERS LOCKED IN DEMO</span>
-            </p>
-            <h3 class="text-xl font-bold text-white leading-snug">
-              <span data-lang="ru">Полная версия тренажёра и стресс-тест вашей сделки</span>
-              <span data-lang="en">Unlock Full Simulator &amp; Custom Deal Stress-Test</span>
-            </h3>
-            <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
-              <span data-lang="ru">Свободная настройка ползунков под ваш актив, выгрузка P&amp;L-отчёта и пакет из 3 расчётных кейсов с ключами проверки доступны по корпоративной LMS-лицензии для бизнес-школ (EMBA) или в рамках Pre-Deal Red Team.</span>
-              <span data-lang="en">Custom parameter modeling, P&amp;L export, and the 3-case EMBA curriculum package with instructor keys are available via Boxed LMS License or a Pre-Deal Red Team engagement.</span>
-            </p>
+          <!-- Slider 3: Debt Ratio -->
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs">
+              <span class="text-slate-300">3. Доля заёмных средств (LBO Debt Ratio)</span>
+              <span id="valDebtRatio" class="num-tab font-mono font-semibold text-slate-200">60%</span>
+            </div>
+            <input id="inpDebtRatio" type="range" min="0" max="100" step="5" value="60" disabled class="w-full">
           </div>
 
-          <div class="w-full space-y-2.5 pt-1">
-            <a data-lang="ru" href="https://t.me/NataliiaGrishina?text=%D0%9D%D0%B0%D1%82%D0%B0%D0%BB%D0%B8%D1%8F%2C%20%D0%B7%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5%21%20%D0%A1%D0%BC%D0%BE%D1%82%D1%80%D1%8E%20%D0%B4%D0%B5%D0%BC%D0%BE%20%D1%81%D0%B8%D0%BC%D1%83%D0%BB%D1%8F%D1%82%D0%BE%D1%80%D0%B0%20%C2%AB%D0%9D%D0%B5%D1%81%D0%B2%D0%B0%D1%80%D0%B5%D0%BD%D0%B8%D0%B5%20M%26A%C2%BB%20v2.2.%20%D0%A5%D0%BE%D1%87%D1%83%20%D0%B7%D0%B0%D0%BF%D1%80%D0%BE%D1%81%D0%B8%D1%82%D1%8C%20%D0%BF%D0%BE%D0%BB%D0%BD%D1%83%D1%8E%20LMS-%D0%BB%D0%B8%D1%86%D0%B5%D0%BD%D0%B7%D0%B8%D1%8E%20%D1%81%203%20%D0%BA%D0%B5%D0%B9%D1%81%D0%B0%D0%BC%D0%B8%20%28450%20000%20%E2%82%BD%29%20/%20%D0%BF%D1%80%D0%B0%D0%BA%D1%82%D0%B8%D0%BA%D1%83%D0%BC%20%D0%B4%D0%BB%D1%8F%20EMBA%20%28300%20000%20%E2%82%BD%29." target="_blank" rel="noopener noreferrer" class="btn-lift w-full inline-flex items-center justify-center px-5 py-3.5 rounded-xl text-xs sm:text-sm font-semibold bg-[#FF2A00] hover:bg-[#e02400] text-white shadow-lg shadow-[#FF2A00]/25">
-              Коробка для LMS / Практикум EMBA (450k / 300k ₽) →
-            </a>
-            <a data-lang="en" href="mailto:natalia@grishina.tech?subject=Academic%20/%20Corporate%20Inquiry%3A%20M%26A%20Simulator%20v2.2%20LMS%20License&body=Hello%20Nataliia%2C%0A%0AWe%20explored%20the%20M%26A%20Indigestion%20Simulator%20v2.2%20public%20demo%20and%20would%20like%20to%20request%20the%20boxed%20LMS%20license%20%28%245%2C000%29%20/%20EMBA%20Boardroom%20War-Game%20%28%243%2C500%29." class="btn-lift w-full inline-flex items-center justify-center px-5 py-3.5 rounded-xl text-xs sm:text-sm font-semibold bg-[#FF2A00] hover:bg-[#e02400] text-white shadow-lg shadow-[#FF2A00]/25">
-              Request LMS Box / EMBA War-Game ($5,000 / $3,500) →
-            </a>
+          <!-- Slider 4: Interest Rate -->
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs">
+              <span class="text-slate-300">4. Эффективная ставка долга (Key Rate + Маржа)</span>
+              <span id="valInterestRate" class="num-tab font-mono font-semibold text-slate-200">25% годовых</span>
+            </div>
+            <input id="inpInterestRate" type="range" min="15" max="35" step="1" value="25" disabled class="w-full">
+          </div>
 
-            <a data-lang="ru" href="https://t.me/NataliiaGrishina?text=%D0%9D%D0%B0%D1%82%D0%B0%D0%BB%D0%B8%D1%8F%2C%20%D0%B7%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5%21%20%D0%A1%D0%BC%D0%BE%D1%82%D1%80%D1%8E%20%D0%B4%D0%B5%D0%BC%D0%BE%20%D1%81%D0%B8%D0%BC%D1%83%D0%BB%D1%8F%D1%82%D0%BE%D1%80%D0%B0%20M%26A%20v2.2.%20%D0%A5%D0%BE%D1%87%D1%83%20%D0%BE%D0%B1%D1%81%D1%83%D0%B4%D0%B8%D1%82%D1%8C%20%D0%BF%D1%80%D0%B5%D0%B4%D1%81%D0%B4%D0%B5%D0%BB%D0%BE%D1%87%D0%BD%D1%8B%D0%B9%20%D0%B0%D1%83%D0%B4%D0%B8%D1%82%20Pre-Deal%20Red%20Team%20%D0%BF%D0%BE%D0%B4%20%D0%BD%D0%B0%D1%88%D1%83%20%D1%81%D0%B4%D0%B5%D0%BB%D0%BA%D1%83%20%28600%20000%20%E2%82%BD%29." target="_blank" rel="noopener noreferrer" class="btn-lift w-full inline-flex items-center justify-center px-5 py-3 rounded-xl text-xs sm:text-sm font-medium bg-[#151A26] hover:bg-slate-800 text-slate-200 hover:text-white border border-[#22293A]">
-              Заказать Pre-Deal Red Team под сделку (600 000 ₽) →
+          <!-- Slider 5: Legacy Penalty -->
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs">
+              <span class="text-slate-300">5. Архитектурный техдолг (Legacy-штраф к EBITDA)</span>
+              <span id="valLegacy" class="num-tab font-mono font-semibold text-rose-400">15%</span>
+            </div>
+            <input id="inpLegacy" type="range" min="5" max="25" step="1" value="15" disabled class="w-full">
+          </div>
+
+          <!-- Slider 6: Synergy Max -->
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs">
+              <span class="text-slate-300">6. Потенциал целевой синергии (к 24 мес.)</span>
+              <span id="valSynergyMax" class="num-tab font-mono font-semibold text-emerald-400">+6% EBITDA</span>
+            </div>
+            <input id="inpSynergyMax" type="range" min="2" max="12" step="1" value="6" disabled class="w-full">
+          </div>
+
+          <!-- Slider 7: Revenue Base -->
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs">
+              <span class="text-slate-300">7. Годовая выручка контура холдинга</span>
+              <span id="valRevenueBase" class="num-tab font-mono font-semibold text-slate-200">10 млрд ₽/год</span>
+            </div>
+            <input id="inpRevenueBase" type="range" min="1" max="50" step="1" value="10" disabled class="w-full">
+          </div>
+
+          <!-- Slider 8: License Share -->
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs">
+              <span class="text-slate-300">8. Доля B2B-лицензий в выручке (база индексации)</span>
+              <span id="valLicenseShare" class="num-tab font-mono font-semibold text-slate-200">20% (2 млрд ₽/год)</span>
+            </div>
+            <input id="inpLicenseShare" type="range" min="10" max="50" step="5" value="20" disabled class="w-full">
+          </div>
+        </div>
+
+        <!-- COMPACT UNLOCK CTA BOX -->
+        <div class="p-4 rounded-2xl bg-[#151A26] border border-[#22293A] space-y-3">
+          <div class="text-xs text-slate-300 leading-relaxed">
+            <strong class="text-white">Нужен расчёт под параметры вашей сделки или учебный модуль для бизнес-школы?</strong> Полная разблокировка всех 8 ползунков, экспорт отчёта для CFO и пакет из 3 кейсов с ключами:
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <a href="https://t.me/NataliiaGrishina?text=%D0%9D%D0%B0%D1%82%D0%B0%D0%BB%D0%B8%D1%8F%2C%20%D0%B7%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5%21%20%D0%A5%D0%BE%D1%87%D1%83%20%D0%B7%D0%B0%D0%BF%D1%80%D0%BE%D1%81%D0%B8%D1%82%D1%8C%20LMS-%D0%BA%D0%BE%D1%80%D0%BE%D0%B1%D0%BA%D1%83%20%D1%81%D0%B8%D0%BC%D1%83%D0%BB%D1%8F%D1%82%D0%BE%D1%80%D0%B0%20M%26A%20v2.2%20%28450%20000%20%E2%82%BD%29%20/%20%D0%B8%D0%B3%D1%80%D1%83%20EMBA%20%28300%20000%20%E2%82%BD%29." target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center px-3 py-2.5 rounded-xl text-xs font-semibold bg-[#FF2A00] hover:bg-[#e02400] text-white transition">
+              LMS-коробка / EMBA →
             </a>
-            <a data-lang="en" href="mailto:natalia@grishina.tech?subject=Engagement%20Inquiry%3A%20Pre-Deal%20Red%20Team%20M%26A%20Audit%20%28%246%2C500%29&body=Hello%20Nataliia%2C%0A%0AWe%20explored%20your%20M%26A%20Simulator%20v2.2%20and%20would%20like%20to%20discuss%20a%205-day%20Pre-Deal%20Red%20Team%20audit%20%28%246%2C500%29%20for%20an%20upcoming%20transaction." class="btn-lift w-full inline-flex items-center justify-center px-5 py-3 rounded-xl text-xs sm:text-sm font-medium bg-[#151A26] hover:bg-slate-800 text-slate-200 hover:text-white border border-[#22293A]">
-              Book Pre-Deal Red Team Audit ($6,500) →
+            <a href="https://t.me/NataliiaGrishina?text=%D0%9D%D0%B0%D1%82%D0%B0%D0%BB%D0%B8%D1%8F%2C%20%D0%B7%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5%21%20%D0%A5%D0%BE%D1%87%D1%83%20%D0%BE%D0%B1%D1%81%D1%83%D0%B4%D0%B8%D1%82%D1%8C%20Pre-Deal%20Red%20Team%20%D0%B0%D1%83%D0%B4%D0%B8%D1%82%20%D0%BD%D0%B0%D1%88%D0%B5%D0%B9%20%D1%81%D0%B4%D0%B5%D0%BB%D0%BA%D0%B8%20%28600%20000%20%E2%82%BD%29." target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center px-3 py-2.5 rounded-xl text-xs font-semibold bg-[#090B10] hover:bg-slate-800 text-slate-200 border border-[#22293A] transition">
+              Pre-Deal Red Team (600k ₽) →
             </a>
           </div>
         </div>
       </div>
 
-      <!-- RIGHT COLUMN: ACTIVE SCENARIO TELEMETRY & 36M CHART -->
-      <div class="lg:col-span-7 rounded-2xl editorial-card p-6 sm:p-8 flex flex-col justify-between space-y-6">
-        <div class="space-y-4">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#22293A] pb-4">
+      <!-- RIGHT COLUMN: FULL ANALYTICAL TELEMETRY & CHARTS -->
+      <div class="lg:col-span-7 space-y-6">
+
+        <!-- TOP KPI STRIP: NET VALUE + 3 CASH FLOW COMPONENTS -->
+        <div class="editorial-card rounded-3xl p-6 sm:p-7 space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#22293A] pb-5">
             <div>
-              <span id="outBadgeRu" data-lang="ru" class="text-xs font-mono text-slate-400 uppercase">01 · БАЗОВЫЙ СЦЕНАРИЙ (3 МЛРД ₽)</span>
-              <span id="outBadgeEn" data-lang="en" class="text-xs font-mono text-slate-400 uppercase">01 · BASELINE SCENARIO (3B ₽)</span>
-              <h2 class="text-2xl font-bold text-white mt-0.5">
-                <span id="outTitleRu" data-lang="ru">Иллюзия «мягкой интеграции»</span>
-                <span id="outTitleEn" data-lang="en">The "Soft Integration" Illusion</span>
+              <span id="scenarioTag" class="text-xs font-mono uppercase tracking-wider text-slate-400">
+                01 · БАЗОВЫЙ СЦЕНАРИЙ (3 000 МЛН ₽)
+              </span>
+              <h2 id="scenarioHeading" class="text-2xl font-bold text-white mt-0.5">
+                Итоговый чистый эффект сделки (Cumulative Net Value, 36 мес.)
               </h2>
             </div>
-            <div id="outNetPnlHeader" class="text-3xl font-mono font-extrabold text-rose-400">
-              −1 092.4M ₽
+            <div id="kpiCumulativeValue" class="num-tab text-3xl sm:text-4xl font-mono font-extrabold text-rose-400 whitespace-nowrap">
+              −1 092.4 млн ₽
             </div>
           </div>
 
-          <p class="text-slate-300 text-sm sm:text-base leading-relaxed">
-            <span id="outDescRu" data-lang="ru">Сохранение двух параллельных ИТ-ландшафтов на 18+ месяцев, умеренная индексация лицензий вендорами (+18.2%) и частичный отток ключевых инженеров (18%) съедают операционную синергию сделки.</span>
-            <span id="outDescEn" data-lang="en">Maintaining duplicate IT stacks for 18+ months, moderate vendor license hikes (+18.2%), and 18% key engineering attrition erode post-merger operational synergy.</span>
-          </p>
-
-          <!-- 3 KPI CARDS -->
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 font-mono pt-1">
-            <div class="p-4 rounded-xl bg-[#090B10] border border-[#22293A]">
-              <div class="text-[11px] text-slate-400 uppercase">
-                <span data-lang="ru">Чистый эффект (Net P&amp;L)</span>
-                <span data-lang="en">36M Net P&amp;L Impact</span>
-              </div>
-              <div id="outKpiNet" class="text-xl font-bold mt-1 text-rose-400">−1 092.4M ₽</div>
+          <!-- 3 P&L Cash Flow Pillars -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="p-4 rounded-2xl bg-[#090B10] border border-[#22293A]">
+              <div class="text-[11px] font-semibold text-slate-400 uppercase">1. Накопленная синергия</div>
+              <div id="kpiSynergy" class="num-tab text-xl font-mono font-bold text-emerald-400 mt-1">+1 225.0 млн ₽</div>
+              <div class="text-[11px] text-slate-500 mt-1">Линейный выход к 24 мес.</div>
             </div>
 
-            <div class="p-4 rounded-xl bg-[#090B10] border border-[#22293A]">
-              <div class="text-[11px] text-slate-400 uppercase">
-                <span data-lang="ru">Накопленная EBITDA (36м)</span>
-                <span data-lang="en">Cumulative 36M EBITDA</span>
-              </div>
-              <div id="outKpiEbitda" class="text-xl font-bold text-white mt-1">+1 907.6M ₽</div>
+            <div class="p-4 rounded-2xl bg-[#090B10] border border-[#22293A]">
+              <div class="text-[11px] font-semibold text-slate-400 uppercase">2. Потери на PMI и техдолг</div>
+              <div id="kpiPmiCost" class="num-tab text-xl font-mono font-bold text-rose-400 mt-1">−967.4 млн ₽</div>
+              <div class="text-[11px] text-slate-500 mt-1">Дубли ИТ и трение интеграции</div>
             </div>
 
-            <div class="p-4 rounded-xl bg-[#090B10] border border-[#22293A]">
-              <div class="text-[11px] text-slate-400 uppercase">
-                <span data-lang="ru">Потери на техдолг и дубли</span>
-                <span data-lang="en">Tech Debt &amp; Duplicate OPEX</span>
+            <div class="p-4 rounded-2xl bg-[#090B10] border border-[#22293A]">
+              <div class="text-[11px] font-semibold text-slate-400 uppercase">3. Проценты по долгу (LBO)</div>
+              <div id="kpiInterest" class="num-tab text-xl font-mono font-bold text-amber-400 mt-1">−1 350.0 млн ₽</div>
+              <div class="text-[11px] text-slate-500 mt-1">Обслуживание кредита за 36 мес.</div>
+            </div>
+          </div>
+
+          <!-- MARKET VERDICT: B2B LICENSE HIKE & PMI DELAY COST -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div id="licenseCard" class="p-4 rounded-2xl bg-rose-950/25 border border-rose-500/30 space-y-1.5">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-rose-300">Вердикт для рынка и B2B-клиентов</span>
+                <span id="kpiLicenseHike" class="num-tab text-lg font-mono font-extrabold text-rose-400">+18.2%</span>
               </div>
-              <div id="outKpiDebt" class="text-xl font-bold text-rose-400 mt-1">−1 420.0M ₽</div>
+              <p id="licenseExplain" class="text-xs text-slate-300 leading-relaxed">
+                Чтобы закрыть кассовую дыру сделки в P&amp;L за 3 года, вендор вынужден принудительно поднять цены на B2B-лицензии минимум на <strong class="text-white">+18.2%</strong>.
+              </p>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-emerald-950/20 border border-emerald-500/30 space-y-1.5">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-emerald-300">Рычаг COO / Скорость PMI</span>
+                <span id="kpiSpeedDelta" class="num-tab text-lg font-mono font-extrabold text-emerald-400">+527.4 млн ₽</span>
+              </div>
+              <p class="text-xs text-slate-300 leading-relaxed">
+                Ускорение сноса дублирующих ИТ-систем с базовых α=0.12 до жёсткого стандарта α=0.25 сохраняет в P&amp;L <strong class="text-white" id="kpiSpeedDeltaInline">+527.4 млн ₽</strong> чистой EBITDA.
+              </p>
             </div>
           </div>
         </div>
 
-        <!-- 36-MONTH TRAJECTORY BAR CHART -->
-        <div class="p-5 rounded-xl bg-[#090B10] border border-[#22293A] space-y-4">
-          <div class="flex items-center justify-between text-xs font-mono text-slate-400">
-            <span>
-              <span data-lang="ru">ДИНАМИКА НАКОПЛЕННОГО ДЕНЕЖНОГО ПОТОКА (M0 → M36):</span>
-              <span data-lang="en">CUMULATIVE CASH FLOW TRAJECTORY (M0 → M36):</span>
-            </span>
-            <span>WACC / Key Rate: 25%</span>
+        <!-- CHART 1: EBITDA MARGIN VS NET MARGIN TRAJECTORY (M1 -> M36) -->
+        <div class="editorial-card rounded-3xl p-6 sm:p-7 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h3 class="text-base font-bold text-white">Динамика рентабельности холдинга (M1 → M36)</h3>
+              <p class="text-xs text-slate-400">Базовая маржа до сделки: 15.0% · Помесячная траектория с защитой масштаба оси Y</p>
+            </div>
+            <div class="flex items-center gap-4 text-xs font-mono">
+              <span class="inline-flex items-center gap-1.5 text-emerald-400">
+                <span class="w-3 h-0.5 bg-emerald-400 inline-block"></span> Маржа EBITDA (%)
+              </span>
+              <span class="inline-flex items-center gap-1.5 text-sky-400">
+                <span class="w-3 h-0.5 bg-sky-400 inline-block"></span> Чистая маржа с долгом (%)
+              </span>
+            </div>
           </div>
 
-          <div id="chartBarsContainer" class="grid grid-cols-7 gap-2.5 items-end h-40 pt-6 px-2">
-            <!-- Populated dynamically via JS -->
+          <!-- SVG Dual Line Chart -->
+          <div class="bg-[#090B10] border border-[#22293A] rounded-2xl p-4">
+            <svg id="marginSvgChart" viewBox="0 0 720 220" class="w-full h-48 sm:h-56 overflow-visible"></svg>
+          </div>
+
+          <div class="grid grid-cols-3 gap-3 text-center font-mono text-xs pt-1">
+            <div class="p-3 rounded-xl bg-[#090B10] border border-[#22293A]">
+              <div class="text-[10px] text-slate-400 uppercase">Дно маржи EBITDA (M1)</div>
+              <div id="kpiMarginM1" class="num-tab text-sm sm:text-base font-bold text-rose-400 mt-0.5">+1.9%</div>
+            </div>
+            <div class="p-3 rounded-xl bg-[#090B10] border border-[#22293A]">
+              <div class="text-[10px] text-slate-400 uppercase">Маржа EBITDA (M12)</div>
+              <div id="kpiMarginM12" class="num-tab text-sm sm:text-base font-bold text-amber-400 mt-0.5">+14.4%</div>
+            </div>
+            <div class="p-3 rounded-xl bg-[#090B10] border border-[#22293A]">
+              <div class="text-[10px] text-slate-400 uppercase">Маржа EBITDA (M36)</div>
+              <div id="kpiMarginM36" class="num-tab text-sm sm:text-base font-bold text-emerald-400 mt-0.5">+20.8%</div>
+            </div>
           </div>
         </div>
 
-        <!-- C-LEVEL DIAGNOSTIC VERDICT -->
-        <div class="p-4 rounded-xl bg-[#151A26]/90 border border-[#22293A] flex items-start gap-3">
-          <span class="text-[#FF2A00] font-mono font-bold text-sm mt-0.5">[CAIO/COO]</span>
-          <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
-            <span id="outVerdictRu" data-lang="ru">Резюме для совета директоров: Попытка «не трогать работающие системы» купленного актива превращает сделку на 3 млрд ₽ в чистый убыток −1,09 млрд ₽ на горизонте 3 лет.</span>
-            <span id="outVerdictEn" data-lang="en">Boardroom Verdict: Attempting a "hands-off" integration on a 3B ₽ acquisition turns the deal into a −1.09B ₽ net value loss over 36 months.</span>
-          </p>
+        <!-- C-LEVEL DECISION FRAMEWORK VERDICT -->
+        <div class="editorial-card rounded-3xl p-6 border-[#22293A] space-y-3">
+          <div class="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[#FF2A00] font-semibold">
+            <span>[C-Level Decision Framework · Резюме для Совета директоров и CFO]</span>
+          </div>
+          <p id="cfoDiagnosticText" class="text-sm text-slate-200 leading-relaxed"></p>
+          <div class="pt-2 border-t border-[#22293A] flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400 font-mono">
+            <span>Формула PMI: Cost(t) = (Legacy × ScaleFactor) × e^(−α·t)</span>
+            <span>ScaleFactor = 0.7 + 0.3 × (CapEx / 3000)</span>
+          </div>
         </div>
+
       </div>
-
     </section>
   </main>
 
-  <!-- FOOTER -->
   <footer class="border-t border-[#22293A]/80 py-8 mt-12 bg-[#090B10]">
-    <div class="max-w-[1200px] mx-auto px-5 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-slate-400">
-      <div>
-        <span data-lang="ru">© 2026 НАТАЛИЯ ГРИШИНА · СИМУЛЯТОР «НЕСВАРЕНИЕ M&amp;A» v2.2</span>
-        <span data-lang="en">© 2026 NATALIIA GRISHINA · M&amp;A INDIGESTION SIMULATOR v2.2</span>
+    <div class="max-w-[1280px] mx-auto px-4 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
+      <div class="font-semibold text-slate-300">
+        © 2026 НАТАЛИЯ ГРИШИНА · СИМУЛЯТОР «НЕСВАРЕНИЕ M&amp;A» v2.2
       </div>
       <div class="flex flex-wrap items-center gap-6">
-        <a href="https://ngrishina-digital.github.io/" class="hover:text-white transition">
-          <span data-lang="ru">Главный сайт</span>
-          <span data-lang="en">Main Website</span>
-        </a>
+        <a href="https://ngrishina-digital.github.io/" class="hover:text-white transition">Главный сайт</a>
         <a href="https://www.linkedin.com/in/nataliagrishina/" target="_blank" rel="noopener noreferrer" class="hover:text-white transition">LinkedIn</a>
-        <a href="https://t.me/ngrishina_digital" target="_blank" rel="noopener noreferrer" class="hover:text-white transition">@ngrishina_digital</a>
-        <a href="https://t.me/NataliiaGrishina" target="_blank" rel="noopener noreferrer" class="hover:text-white transition">Telegram</a>
+        <a href="https://t.me/ngrishina_digital" target="_blank" rel="noopener noreferrer" class="hover:text-white transition">Канал «Злая операционка»</a>
+        <a href="https://t.me/NataliiaGrishina" target="_blank" rel="noopener noreferrer" class="hover:text-white transition">Telegram: @NataliiaGrishina</a>
       </div>
     </div>
   </footer>
 
   <script>
-    (function() {
-      const SCENARIOS = {
-        baseline: {
-          badgeRu: '01 · БАЗОВЫЙ СЦЕНАРИЙ (3 МЛРД ₽)',
-          badgeEn: '01 · BASELINE SCENARIO (3B ₽)',
-          titleRu: 'Иллюзия «мягкой интеграции»',
-          titleEn: 'The "Soft Integration" Illusion',
-          descRu: 'Сохранение двух параллельных ИТ-ландшафтов на 18+ месяцев, умеренная индексация лицензий вендорами (+18.2%) и частичный отток ключевых инженеров (18%) съедают операционную синергию сделки.',
-          descEn: 'Maintaining duplicate IT stacks for 18+ months, moderate vendor license hikes (+18.2%), and 18% key engineering attrition erode post-merger operational synergy.',
-          verdictRu: 'Резюме для совета директоров: Попытка «не трогать работающие системы» купленного актива превращает сделку на 3 млрд ₽ в чистый убыток −1,09 млрд ₽ на горизонте 3 лет.',
-          verdictEn: 'Boardroom Verdict: Attempting a "hands-off" integration on a 3B ₽ acquisition turns the deal into a −1.09B ₽ net value loss over 36 months.',
-          capex: 3000,
-          capexLabel: '3 000M ₽',
-          pmi: 12,
-          pmiLabel: '0.12',
-          hike: 18,
-          hikeLabel: '+18.2%',
-          churn: 18,
-          churnLabel: '18%',
-          dup: 18,
-          dupLabel: '18 мес.',
-          netPnlText: '−1 092.4M ₽',
-          ebitdaText: '+1 907.6M ₽',
-          debtText: '−1 420.0M ₽',
-          colorClass: 'text-rose-400',
-          curve: [-3000, -2850, -2610, -2290, -1840, -1420, -1092.4]
-        },
-        frankenstein: {
-          badgeRu: '02 · «ФРАНКЕНШТЕЙН» (5 МЛРД ₽)',
-          badgeEn: '02 · "FRANKENSTEIN" (5B ₽)',
-          titleRu: 'ИТ-зоопарк и вендорский оброк',
-          titleEn: 'Legacy Zoo & Vendor Lock-In Tax',
-          descRu: 'Покупка перегретого актива без Pre-Deal Red Team: паралич PMI-интеграции (α = 0.08), принудительный рост цен на B2B-лицензии (+67.9%), потеря 34% инженеров и 30 месяцев оплаты двойного ИТ-контура.',
-          descEn: 'Acquiring an overpriced asset without Red Team due diligence: stalled PMI (α = 0.08), +67.9% forced vendor license hike, 34% engineer churn, and 30 months of duplicate OPEX.',
-          verdictRu: 'Резюме для совета директоров: Классический «ИТ-Франкенштейн» — при ставке капитала 25% сделка сжигает 4,07 млрд ₽ стоимости и блокирует операционный денежный поток холдинга.',
-          verdictEn: 'Boardroom Verdict: Classic "IT Frankenstein" — at a 25% cost of capital, the deal destroys 4.07B ₽ in value and drains group operating cash flow.',
-          capex: 5000,
-          capexLabel: '5 000M ₽',
-          pmi: 8,
-          pmiLabel: '0.08',
-          hike: 68,
-          hikeLabel: '+67.9%',
-          churn: 34,
-          churnLabel: '34%',
-          dup: 30,
-          dupLabel: '30 мес.',
-          netPnlText: '−4 074.9M ₽',
-          ebitdaText: '+925.1M ₽',
-          debtText: '−3 180.5M ₽',
-          colorClass: 'text-rose-500',
-          curve: [-5000, -5120, -4980, -4760, -4510, -4290, -4074.9]
-        },
-        hardPmi: {
-          badgeRu: '03 · «ЖЕСТКИЙ PMI» (2 МЛРД ₽)',
-          badgeEn: '03 · "HARD PMI" (2B ₽)',
-          titleRu: 'Хирургическая санация P&L',
-          titleEn: 'Surgical Turnaround & P&L Defense',
-          descRu: 'Предсделочный дисконт за техдолг по итогам Red Team, жёсткая консолидация ИТ-ядер за 6 месяцев (α = 0.25), удержание ключевых архитекторов (отток 7%) и нулевая индексация лицензий вендоров (0.0%).',
-          descEn: 'Pre-deal valuation haircut for tech debt via Red Team audit, core IT stack consolidation in 6 months (α = 0.25), key architect retention (7% churn), and 0.0% vendor license inflation.',
-          verdictRu: 'Резюме для совета директоров: Единственная архитектура сделки, которая при ставке 25% окупает CapEx за 21 месяц и приносит +972,1 млн ₽ чистой созданной стоимости.',
-          verdictEn: 'Boardroom Verdict: The only deal architecture that pays back CapEx within 21 months at 25% WACC and delivers +972.1M ₽ in net value creation.',
-          capex: 2000,
-          capexLabel: '2 000M ₽',
-          pmi: 25,
-          pmiLabel: '0.25',
-          hike: 0,
-          hikeLabel: '0.0%',
-          churn: 7,
-          churnLabel: '7%',
-          dup: 6,
-          dupLabel: '6 мес.',
-          netPnlText: '+972.1M ₽',
-          ebitdaText: '+2 972.1M ₽',
-          debtText: '−310.0M ₽',
-          colorClass: 'text-emerald-400',
-          curve: [-2000, -1480, -820, -110, 340, 690, 972.1]
+    const PRESETS = {
+      baseline: {
+        tag: '01 · БАЗОВЫЙ СЦЕНАРИЙ (3 000 МЛН ₽)',
+        dealPrice: 3000,
+        debtRatio: 60,
+        interestRate: 25,
+        revenueBase: 10,
+        licenseShare: 20,
+        legacy: 15,
+        speed: 0.12,
+        synergyMax: 6
+      },
+      frankenstein: {
+        tag: '02 · СЦЕНАРИЙ «ФРАНКЕНШТЕЙН» (5 000 МЛН ₽)',
+        dealPrice: 5000,
+        debtRatio: 70,
+        interestRate: 25,
+        revenueBase: 10,
+        licenseShare: 20,
+        legacy: 20,
+        speed: 0.08,
+        synergyMax: 4
+      },
+      hardPmi: {
+        tag: '03 · СЦЕНАРИЙ «ЖЁСТКИЙ PMI» (2 000 МЛН ₽)',
+        dealPrice: 2000,
+        debtRatio: 30,
+        interestRate: 25,
+        revenueBase: 10,
+        licenseShare: 20,
+        legacy: 8,
+        speed: 0.25,
+        synergyMax: 8
+      }
+    };
+
+    let currentActivePreset = 'baseline';
+
+    function formatMln(val, showPlus = true) {
+      const sign = val > 0 ? (showPlus ? '+' : '') : (val < 0 ? '−' : '');
+      const absStr = Math.abs(val).toFixed(1).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+      return `${sign}${absStr} млн ₽`;
+    }
+
+    function computeModel(params) {
+      const { dealPrice, debtRatio, interestRate, revenueBase, licenseShare, legacy, speed, synergyMax } = params;
+      const annualRevMln = revenueBase * 1000.0;
+      const monthlyRevMln = annualRevMln / 12.0;
+
+      const loanPrincipalMln = dealPrice * (debtRatio / 100.0);
+      const monthlyInterestMln = (loanPrincipalMln * (interestRate / 100.0)) / 12.0;
+      const monthlyInterestPctOfRev = (monthlyInterestMln / monthlyRevMln) * 100.0;
+
+      const dealScaleFactor = 0.7 + 0.3 * (dealPrice / 3000.0);
+
+      let totalSynergyMln = 0;
+      let totalPmiCostMln = 0;
+      let totalInterestMln = 0;
+      let totalPmiAtFastSpeed = 0;
+
+      const ebitdaSeries = [];
+      const netMarginSeries = [];
+
+      for (let t = 1; t <= 36; t++) {
+        const synPct = synergyMax * Math.min(1.0, t / 24.0);
+        const intCostPct = (legacy * dealScaleFactor) * Math.exp(-speed * t);
+        const fastCostPct = (legacy * dealScaleFactor) * Math.exp(-0.25 * t);
+
+        const actualEbitdaMargin = 15.0 + synPct - intCostPct;
+        const actualNetMargin = actualEbitdaMargin - monthlyInterestPctOfRev;
+
+        ebitdaSeries.push(actualEbitdaMargin);
+        netMarginSeries.push(actualNetMargin);
+
+        totalSynergyMln += monthlyRevMln * (synPct / 100.0);
+        totalPmiCostMln += monthlyRevMln * (intCostPct / 100.0);
+        totalPmiAtFastSpeed += monthlyRevMln * (fastCostPct / 100.0);
+        totalInterestMln += monthlyInterestMln;
+      }
+
+      const cumulativeValueMln = totalSynergyMln - totalPmiCostMln - totalInterestMln;
+      const threeYearLicenseRevMln = 3.0 * annualRevMln * (licenseShare / 100.0);
+      const licenseHikePct = cumulativeValueMln < 0
+        ? (-cumulativeValueMln / threeYearLicenseRevMln) * 100.0
+        : 0.0;
+
+      const speedSavingsMln = Math.max(0, totalPmiCostMln - totalPmiAtFastSpeed);
+
+      return {
+        dealScaleFactor,
+        totalSynergyMln,
+        totalPmiCostMln,
+        totalInterestMln,
+        cumulativeValueMln,
+        licenseHikePct,
+        speedSavingsMln,
+        ebitdaSeries,
+        netMarginSeries
+      };
+    }
+
+    function renderMarginChart(ebitdaSeries, netMarginSeries) {
+      const svg = document.getElementById('marginSvgChart');
+      const W = 720, H = 220, padL = 46, padR = 18, padT = 18, padB = 28;
+      const plotW = W - padL - padR;
+      const plotH = H - padT - padB;
+
+      const allVals = [...ebitdaSeries, ...netMarginSeries, 0, 15, 22];
+      const minVal = Math.min(-5, Math.floor(Math.min(...allVals) - 2));
+      const maxVal = Math.max(24, Math.ceil(Math.max(...allVals) + 2));
+
+      const xOf = (idx) => padL + (idx / 35) * plotW;
+      const yOf = (val) => padT + ((maxVal - val) / (maxVal - minVal)) * plotH;
+
+      let html = '';
+
+      // Grid lines (0%, 15% baseline, max)
+      [0, 10, 15, 20].forEach(gv => {
+        if (gv >= minVal && gv <= maxVal) {
+          const y = yOf(gv);
+          const isBase = gv === 15;
+          html += `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="${isBase ? '#475569' : '#1E293B'}" stroke-dasharray="${isBase ? '4 4' : ''}" stroke-width="1" />`;
+          html += `<text x="${padL - 8}" y="${y + 4}" text-anchor="end" fill="${isBase ? '#94A3B8' : '#64748B'}" font-size="10" font-family="JetBrains Mono">${gv}%</text>`;
         }
+      });
+
+      // X-axis month labels
+      [1, 6, 12, 18, 24, 30, 36].forEach(m => {
+        const x = xOf(m - 1);
+        html += `<text x="${x}" y="${H - 6}" text-anchor="middle" fill="#64748B" font-size="10" font-family="JetBrains Mono">M${m}</text>`;
+      });
+
+      // Polyline points
+      const ebitdaPts = ebitdaSeries.map((v, i) => `${xOf(i).toFixed(1)},${yOf(v).toFixed(1)}`).join(' ');
+      const netPts = netMarginSeries.map((v, i) => `${xOf(i).toFixed(1)},${yOf(v).toFixed(1)}`).join(' ');
+
+      html += `<polyline fill="none" stroke="#38BDF8" stroke-width="2.2" points="${netPts}" />`;
+      html += `<polyline fill="none" stroke="#10B981" stroke-width="2.8" points="${ebitdaPts}" />`;
+
+      // Highlight start & end dots
+      [0, 11, 23, 35].forEach(i => {
+        html += `<circle cx="${xOf(i)}" cy="${yOf(ebitdaSeries[i])}" r="3.5" fill="#10B981" />`;
+        html += `<circle cx="${xOf(i)}" cy="${yOf(netMarginSeries[i])}" r="3" fill="#38BDF8" />`;
+      });
+
+      svg.innerHTML = html;
+    }
+
+    function updateDashboard() {
+      const params = {
+        dealPrice: parseFloat(document.getElementById('inpDealPrice').value),
+        speed: parseFloat(document.getElementById('inpSpeed').value),
+        debtRatio: parseFloat(document.getElementById('inpDebtRatio').value),
+        interestRate: parseFloat(document.getElementById('inpInterestRate').value),
+        legacy: parseFloat(document.getElementById('inpLegacy').value),
+        synergyMax: parseFloat(document.getElementById('inpSynergyMax').value),
+        revenueBase: parseFloat(document.getElementById('inpRevenueBase').value),
+        licenseShare: parseFloat(document.getElementById('inpLicenseShare').value)
       };
 
-      const labels = ['M0', 'M6', 'M12', 'M18', 'M24', 'M30', 'M36'];
+      const res = computeModel(params);
 
-      function renderScenario(key) {
-        const s = SCENARIOS[key];
-        if (!s) return;
+      // Update slider value labels
+      document.getElementById('valDealPrice').textContent = `${params.dealPrice.toLocaleString('ru-RU')} млн ₽`;
+      document.getElementById('valScaleFactor').textContent = `${res.dealScaleFactor.toFixed(2)}x`;
+      document.getElementById('valSpeed').textContent = `${params.speed.toFixed(2)} / мес`;
+      document.getElementById('valDebtRatio').textContent = `${params.debtRatio}%`;
+      document.getElementById('valInterestRate').textContent = `${params.interestRate}% годовых`;
+      document.getElementById('valLegacy').textContent = `${params.legacy}%`;
+      document.getElementById('valSynergyMax').textContent = `+${params.synergyMax}% EBITDA`;
+      document.getElementById('valRevenueBase').textContent = `${params.revenueBase} млрд ₽/год`;
+      document.getElementById('valLicenseShare').textContent = `${params.licenseShare}% (${(params.revenueBase * params.licenseShare / 100).toFixed(1)} млрд ₽/год)`;
 
-        // Update buttons active state
-        document.querySelectorAll('.scenario-btn').forEach(btn => {
-          const isMatch = btn.getAttribute('data-scenario') === key;
-          btn.classList.toggle('active-scenario', isMatch);
-          const pill = btn.querySelector('.active-pill');
-          if (pill) pill.classList.toggle('hidden', !isMatch);
-        });
+      // Update KPI cards
+      const cumEl = document.getElementById('kpiCumulativeValue');
+      cumEl.textContent = formatMln(res.cumulativeValueMln);
+      cumEl.className = 'num-tab text-3xl sm:text-4xl font-mono font-extrabold whitespace-nowrap ' +
+        (res.cumulativeValueMln >= 0 ? 'text-emerald-400' : 'text-rose-400');
 
-        // Update locked sliders preview
-        document.getElementById('sliderCapex').value = s.capex;
-        document.getElementById('sliderCapexLabel').textContent = s.capexLabel;
-        document.getElementById('sliderPmi').value = s.pmi;
-        document.getElementById('sliderPmiLabel').textContent = s.pmiLabel;
-        document.getElementById('sliderHike').value = s.hike;
-        document.getElementById('sliderHikeLabel').textContent = s.hikeLabel;
-        document.getElementById('sliderChurn').value = s.churn;
-        document.getElementById('sliderChurnLabel').textContent = s.churnLabel;
-        document.getElementById('sliderDup').value = s.dup;
-        document.getElementById('sliderDupLabel').textContent = s.dupLabel;
+      document.getElementById('kpiSynergy').textContent = formatMln(res.totalSynergyMln);
+      document.getElementById('kpiPmiCost').textContent = formatMln(-res.totalPmiCostMln);
+      document.getElementById('kpiInterest').textContent = formatMln(-res.totalInterestMln);
 
-        // Update Telemetry Text
-        document.getElementById('outBadgeRu').textContent = s.badgeRu;
-        document.getElementById('outBadgeEn').textContent = s.badgeEn;
-        document.getElementById('outTitleRu').textContent = s.titleRu;
-        document.getElementById('outTitleEn').textContent = s.titleEn;
-        document.getElementById('outDescRu').textContent = s.descRu;
-        document.getElementById('outDescEn').textContent = s.descEn;
-        document.getElementById('outVerdictRu').textContent = s.verdictRu;
-        document.getElementById('outVerdictEn').textContent = s.verdictEn;
-
-        const headerNet = document.getElementById('outNetPnlHeader');
-        headerNet.textContent = s.netPnlText;
-        headerNet.className = 'text-3xl font-mono font-extrabold ' + s.colorClass;
-
-        const kpiNet = document.getElementById('outKpiNet');
-        kpiNet.textContent = s.netPnlText;
-        kpiNet.className = 'text-xl font-bold mt-1 ' + s.colorClass;
-
-        document.getElementById('outKpiEbitda').textContent = s.ebitdaText;
-        document.getElementById('outKpiDebt').textContent = s.debtText;
-
-        // Render 36-Month Bars
-        const chartContainer = document.getElementById('chartBarsContainer');
-        chartContainer.innerHTML = '';
-        s.curve.forEach((val, idx) => {
-          const heightPct = Math.min(100, Math.max(14, Math.round((Math.abs(val) / 5200) * 100)));
-          const isPos = val >= 0;
-          const formattedVal = val > 0 ? '+' + Math.round(val) : Math.round(val);
-
-          const col = document.createElement('div');
-          col.className = 'flex flex-col items-center justify-end h-full space-y-1.5';
-          col.innerHTML = `
-            <span class="text-[10px] sm:text-xs font-mono font-semibold ${isPos ? 'text-emerald-400' : 'text-rose-400'}">${formattedVal}</span>
-            <div style="height: ${heightPct}%" class="w-full rounded-t-md transition-all duration-300 ${isPos ? 'bg-emerald-500/80 border border-emerald-400' : 'bg-rose-500/70 border border-rose-400/80'}"></div>
-            <span class="text-[10px] font-mono text-slate-500">${labels[idx]}</span>
-          `;
-          chartContainer.appendChild(col);
-        });
+      // License hike card
+      const hikeEl = document.getElementById('kpiLicenseHike');
+      const licExplain = document.getElementById('licenseExplain');
+      const licCard = document.getElementById('licenseCard');
+      if (res.licenseHikePct > 0) {
+        hikeEl.textContent = `+${res.licenseHikePct.toFixed(1)}%`;
+        hikeEl.className = 'num-tab text-lg font-mono font-extrabold text-rose-400';
+        licCard.className = 'p-4 rounded-2xl bg-rose-950/25 border border-rose-500/30 space-y-1.5';
+        licExplain.innerHTML = `Чтобы закрыть кассовую дыру сделки (<strong class="text-white">${formatMln(res.cumulativeValueMln)}</strong>) за 3 года, вендор вынужден поднять цены на B2B-лицензии для рынка минимум на <strong class="text-rose-300">+${res.licenseHikePct.toFixed(1)}%</strong>.`;
+      } else {
+        hikeEl.textContent = '0.0%';
+        hikeEl.className = 'num-tab text-lg font-mono font-extrabold text-emerald-400';
+        licCard.className = 'p-4 rounded-2xl bg-emerald-950/20 border border-emerald-500/30 space-y-1.5';
+        licExplain.innerHTML = `Сделка окупается за счёт операционной синергии и быстрой расчистки легаси — принудительная индексация B2B-лицензий клиентам не требуется (<strong class="text-emerald-300">0.0%</strong>).`;
       }
 
-      // Attach click listeners to scenario preset buttons
-      document.querySelectorAll('.scenario-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-          renderScenario(this.getAttribute('data-scenario'));
-        });
-      });
+      // Speed savings
+      const speedDeltaText = res.speedSavingsMln > 1 ? `+${res.speedSavingsMln.toFixed(1)} млн ₽` : 'Эталон α ≥ 0.25';
+      document.getElementById('kpiSpeedDelta').textContent = speedDeltaText;
+      document.getElementById('kpiSpeedDeltaInline').textContent =
+        res.speedSavingsMln > 1 ? `+${res.speedSavingsMln.toFixed(1)} млн ₽` : 'максимум возможной EBITDA';
 
-      // Language Toggle
-      const langBtn = document.getElementById('langToggle');
-      const badgeRu = document.getElementById('langBadgeRu');
-      const badgeEn = document.getElementById('langBadgeEn');
-      let currentLang = localStorage.getItem('ngrishina_lang') || 'ru';
+      // Margin checkpoints
+      const m1 = res.ebitdaSeries[0];
+      const m12 = res.ebitdaSeries[11];
+      const m36 = res.ebitdaSeries[35];
+      document.getElementById('kpiMarginM1').textContent = `${m1 >= 0 ? '+' : ''}${m1.toFixed(1)}%`;
+      document.getElementById('kpiMarginM12').textContent = `${m12 >= 0 ? '+' : ''}${m12.toFixed(1)}%`;
+      document.getElementById('kpiMarginM36').textContent = `${m36 >= 0 ? '+' : ''}${m36.toFixed(1)}%`;
 
-      function applyLang(lang) {
-        document.documentElement.lang = lang;
-        localStorage.setItem('ngrishina_lang', lang);
-        if (lang === 'ru') {
-          badgeRu.className = 'text-white';
-          badgeEn.className = 'text-slate-500';
-        } else {
-          badgeRu.className = 'text-slate-500';
-          badgeEn.className = 'text-white';
-        }
+      // CFO Diagnostic Verdict
+      const cfoEl = document.getElementById('cfoDiagnosticText');
+      if (res.cumulativeValueMln < -2500) {
+        cfoEl.innerHTML = `При CapEx <strong class="text-white">${params.dealPrice} млн ₽</strong> и скорости PMI <strong class="text-rose-400">α = ${params.speed.toFixed(2)}</strong> сделка превращается в «ИТ-Франкенштейна»: затраты на содержание дублирующего легаси (${formatMln(-res.totalPmiCostMln)}) и обслуживание долга (${formatMln(-res.totalInterestMln)}) сжигают синергию, создавая чистый убыток <strong class="text-rose-400">${formatMln(res.cumulativeValueMln)}</strong>. Без предсделочного аудита Red Team и жёсткого сноса дублей сделку подписывать нельзя.`;
+      } else if (res.cumulativeValueMln < 0) {
+        cfoEl.innerHTML = `Ловушка «мягкой интеграции»: синергия (<strong class="text-emerald-400">${formatMln(res.totalSynergyMln)}</strong>) перекрывает операционные косты PMI (${formatMln(-res.totalPmiCostMln)}), но процентная нагрузка по LBO-долгу (${formatMln(-res.totalInterestMln)}) уводит суммарный 36-месячный баланс в минус (<strong class="text-rose-400">${formatMln(res.cumulativeValueMln)}</strong>). Чтобы выйти в плюс, необходимо ускорить PMI минимум до α = 0.22–0.25 и снизить цену входа на величину техдолга.`;
+      } else {
+        cfoEl.innerHTML = `Устойчивая архитектура сделки: за счёт предсделочного дисконта CapEx (<strong class="text-white">${params.dealPrice} млн ₽</strong>) и высокой скорости PMI (<strong class="text-emerald-400">α = ${params.speed.toFixed(2)}</strong>) потери на техдолг ограничены уровнем ${formatMln(-res.totalPmiCostMln)}, а чистый созданный денежный поток за 36 месяцев составляет <strong class="text-emerald-400">${formatMln(res.cumulativeValueMln)}</strong>.`;
       }
 
-      applyLang(currentLang);
-      langBtn.addEventListener('click', function() {
-        applyLang(document.documentElement.lang === 'ru' ? 'en' : 'ru');
-      });
+      renderMarginChart(res.ebitdaSeries, res.netMarginSeries);
+    }
 
-      // Initial render
-      renderScenario('baseline');
-    })();
+    function applyPreset(key) {
+      const p = PRESETS[key];
+      if (!p) return;
+      currentActivePreset = key;
+
+      document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+      const activeBtn = document.getElementById('btn-' + key);
+      if (activeBtn) activeBtn.classList.add('active');
+
+      document.getElementById('inpDealPrice').value = p.dealPrice;
+      document.getElementById('inpSpeed').value = p.speed;
+      document.getElementById('inpDebtRatio').value = p.debtRatio;
+      document.getElementById('inpInterestRate').value = p.interestRate;
+      document.getElementById('inpLegacy').value = p.legacy;
+      document.getElementById('inpSynergyMax').value = p.synergyMax;
+      document.getElementById('inpRevenueBase').value = p.revenueBase;
+      document.getElementById('inpLicenseShare').value = p.licenseShare;
+
+      document.getElementById('scenarioTag').textContent = p.tag;
+      document.getElementById('customBadge').textContent = 'Пресет: ' + p.tag.split('·')[1].trim();
+      updateDashboard();
+    }
+
+    function onUserSliderChange() {
+      document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+      const dp = document.getElementById('inpDealPrice').value;
+      const sp = parseFloat(document.getElementById('inpSpeed').value).toFixed(2);
+      document.getElementById('scenarioTag').textContent = `КАСТОМНЫЙ СТРЕСС-ТЕСТ (CAPEX: ${dp} МЛН ₽ · PMI α: ${sp})`;
+      document.getElementById('customBadge').textContent = 'Ручной стресс-тест';
+      updateDashboard();
+    }
+
+    // Initialize with Baseline
+    applyPreset('baseline');
   </script>
 </body>
 </html>
